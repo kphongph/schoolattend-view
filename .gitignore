@@ -56,4 +56,6 @@ typings/
 
 # dotenv environment variables file
 .env
-
+myView
+_view
+config.js

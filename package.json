@@ -1,0 +1,24 @@
+{
+  "name": "schoolattend-view",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kphongph/schoolattend-view.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kphongph/schoolattend-view/issues"
+  },
+  "homepage": "https://github.com/kphongph/schoolattend-view#readme",
+  "dependencies": {
+    "express": "^4.15.3",
+    "leveldb-logview": "git://github.com/kphongph/leveldb-logview.git#master",
+    "request": "^2.81.0"
+  }
+}
