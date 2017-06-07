@@ -136,8 +136,10 @@ var getMorningInfo = function(chunk) {
       } else {
         if(body.hostid) {
           chunk['_info'] = body;
-          if(body.educationclassid.length == 0) {
-            reject("no educationclassid"); 
+          if(body.educationclassid.length == 0 || 
+            body.year == null ||
+            body.semester == null) {
+            reject("misformat morninginfo"); 
           } else {
             fulfill(chunk);
           } 
@@ -159,45 +161,40 @@ var setDocument = function(chunk) {
       chunk._info.room],'hex');
     viewdb.get(_by_room,function(err,doc) {
       if(err) {
-        var value = {'total':chunk._student.length};
+        var value = {};
         if(chunk._student.indexOf(chunk.value.cid)!=-1) {
-           value[chunk.value.desc] = 1;
+           value[chunk.value.desc] = [chunk.value.cid];
         }
-        var doc = {};
+        var doc = {'total':chunk._student.length};
         doc['date_'+chunk._info.recdate] = value;
         viewdb.put(_by_room,doc,function() {
           fulfill(chunk);
         });
       } else {
         // update
-        fulfill(chunk);
-        /*
-        var recdates = null;
-        var _sexists = false;
-        for(var i=0;i<doc.recdates.length;i++) {
-          if(doc.recdates[i].date == chunk._info.recdate) {
-            recdates = doc.recdates[i];
-            break;
+        if(!doc['date_'+chunk._info.recdate]) {
+          doc['date_'+chunk._info.recdate]={};
+        }
+        var obj = doc['date_'+chunk._info.recdate];
+
+        // reverse
+        if(chunk._value && obj[chunk._value.desc]) {
+          if(chunk._student.indexOf(chunk._value.cid)!=-1) {
+            obj[chunk._value.desc] = _.difference(obj[chunk._value.desc],[chunk._value.cid]);
           }
         }
-        if(recdates != null) {
-          for(var i=0;i<recdates.info.length;i++) {
-            if(recdates.info[i].cid == chunk.value.cid) {
-              recdates.info[i].desc = chunk.value.desc;
-              _sexists = true;
-              break;
-            }
-          }
+        
+        // forward
+        if(!obj[chunk.value.desc]) {
+          obj[chunk.value.desc] = [];
+        }
+        if(chunk._student.indexOf(chunk.value.cid)!=-1) {
+          obj[chunk.value.desc] = _.union(obj[chunk.value.desc],[chunk.value.cid]);
         }
 
-        if(recdates == null) {
-          var tmp = {'date':chunk._info.recdate,'info':[]};
-          if(chunk._student.indexOf(chunk.value.cid)!=-1) {
-            tmp.info.push({'cid':chunk.value.cid,'desc':chunk.value.desc});
-          }
-          doc.recdates.push(tmp);
-        };
-        */
+        viewdb.put(_by_room,doc,function() {
+          fulfill(chunk);
+        });
       }    
     });
   });
@@ -221,7 +218,6 @@ module.exports.createStreamHandlers = function(config) {
         .then(setDocument)
         .then(function(_chunk) {
           console.log('success');
-          console.log(_chunk);
           cb(null,_chunk);
         })
         .catch(function(err) {
