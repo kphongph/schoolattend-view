@@ -36,7 +36,7 @@ var setDocument = function(chunk) {
       doc['recdate'] = _.union(doc['recdate'],[chunk._morning.recdate]);
       
       if(chunk._value) {
-        if(chunk._student.indexOf(chunk._value.cid)!=-1) {
+        if(chunk._student && chunk._student.indexOf(chunk._value.cid)!=-1) {
           if(doc[chunk._value.cid]) {
             doc[chunk._value.cid] = _.difference(doc[chunk._value.cid],
               [chunk._morning.recdate]);
@@ -44,7 +44,7 @@ var setDocument = function(chunk) {
         }
       }
 
-      if(chunk._student.indexOf(chunk.value.cid)!=-1) {
+      if(chunk._student && chunk._student.indexOf(chunk.value.cid)!=-1) {
         if(!doc[chunk.value.cid]) {
           doc[chunk.value.cid] = [];
         }
@@ -62,6 +62,12 @@ var setDocument = function(chunk) {
 var getQinfoStudentList = function(chunk) {
   return through2.obj(function(chunk,enc,cb) {
     if(!chunk._morning) {
+      cb(null,chunk);
+      return;
+    }
+    if(_.isNull(chunk._morning.year) ||
+       _.isNull(chunk._morning.hostid) ||
+       _.isNull(chunk._morning.room)) {
       cb(null,chunk);
       return;
     }
