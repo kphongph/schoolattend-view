@@ -19,6 +19,7 @@
   "dependencies": {
     "express": "^4.15.3",
     "leveldb-logview": "git://github.com/kphongph/leveldb-logview.git#master",
+    "multilevel": "^7.3.0",
     "request": "^2.81.0"
   }
 }
