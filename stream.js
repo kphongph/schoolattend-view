@@ -159,43 +159,33 @@ var setDocument = function(chunk) {
       chunk._info.hostid,
       chunk._info.educationclassid,
       chunk._info.room],'hex');
-    viewdb.get(_by_room,function(err,doc) {
+    viewdb.get(_by_room,function(err,_doc) {
+      var doc = {}; 
       if(err) {
-        var value = {};
-        if(chunk._student.indexOf(chunk.value.cid)!=-1) {
-           value[chunk.value.desc] = [chunk.value.cid];
-        }
-        var doc = {'total':chunk._student.length};
-        doc['date_'+chunk._info.recdate] = value;
-        viewdb.put(_by_room,doc,function() {
-          fulfill(chunk);
-        });
+         doc = {'recdate':[]};
       } else {
-        // update
-        if(!doc['date_'+chunk._info.recdate]) {
-          doc['date_'+chunk._info.recdate]={};
-        }
-        var obj = doc['date_'+chunk._info.recdate];
-
-        // reverse
-        if(chunk._value && obj[chunk._value.desc]) {
-          if(chunk._student.indexOf(chunk._value.cid)!=-1) {
-            obj[chunk._value.desc] = _.difference(obj[chunk._value.desc],[chunk._value.cid]);
+         doc = _doc;
+      }
+      doc['recdate'] = _.union(doc['recdate'],[chunk._info.recdate]);
+      
+      if(chunk._value) {
+        if(chunk._student.indexOf(chunk._value.cid)!=-1) {
+          if(doc[chunk._value.cid]) {
+            doc[chunk._value.cid] = _.difference(doc[chunk._value.cid],[chunk._info.recdate]);
           }
         }
-        
-        // forward
-        if(!obj[chunk.value.desc]) {
-          obj[chunk.value.desc] = [];
-        }
-        if(chunk._student.indexOf(chunk.value.cid)!=-1) {
-          obj[chunk.value.desc] = _.union(obj[chunk.value.desc],[chunk.value.cid]);
-        }
+      }
 
-        viewdb.put(_by_room,doc,function() {
+      if(chunk._student.indexOf(chunk.value.cid)!=-1) {
+        if(!doc[chunk.value.cid]) {
+          doc[chunk.value.cid] = [];
+        }
+        doc[chunk.value.cid] = _.union(doc[chunk.value.cid],[chunk._info.recdate]);
+      }
+      
+      viewdb.put(_by_room,doc,function() {
           fulfill(chunk);
-        });
-      }    
+      });
     });
   });
 }
