@@ -1,46 +1,39 @@
 var express = require('express');
+var through2 = require('through2');
 var logview = require('leveldb-logview');
 var bodyParser = require('body-parser');
 var bytewise = require('bytewise');
-
-var config = require('./config');
-var stream = require('./stream');
+var JSONStream = require('JSONStream');
+var multilevel = require('multilevel');
+var net = require('net');
 
 var app = express();
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 
-logview.config({
-  url:'https://maas.nuqlis.com:9000/api/log/morningdetail',
-  jwtToken:config.token,
-  mainDb:stream.db,
-  streamHandler:stream.createStreamHandlers(config)
-});
-
-app.use(logview.handle_match);
+var attendDb = multilevel.client();
+var con = net.connect(3000);
+con.pipe(attendDb.createRpcStream()).pipe(con); 
 
 app.get('/by_room/:year/:semester/:host',function(req,res) {
-  console.log('yo..yo');
   console.log(req.params);
   var start = ['by_room',Number(req.params.year),Number(req.params.semester),req.params.host];
   var end = start.slice();
   end.push(undefined);
   
-  stream.db.createReadStream({
-    start:bytewise.encode(start,'hex'),
-    end:bytewise.encode(end,'hex')
-  }).on('data',function(data) {
-     console.log(data);
-  });
-  console.log('yo..yo1');
+  attendDb.createReadStream({
+ //   start:bytewise.encode(start,'hex'),
+ //   end:bytewise.encode(end,'hex')
+  })
+  .pipe(through2.obj(function(chunk,enc,cb) {
+    chunk.key = bytewise.decode(new Buffer(chunk.key, 'hex'));
+    cb(null,chunk);
+  }))
+  .pipe(JSONStream.stringify())
+  .pipe(res);
 });
 
-// app.use(logview.monitor);
 
-// app.get('/view',logview.serve);
-// app.post('/view',logview.serve);
-
-app.listen(config.port, function () {
-  console.log('Example app listening on port !',config.port)
+app.listen(8088, function () {
 })
