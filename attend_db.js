@@ -28,12 +28,10 @@ var setDocument = function(chunk) {
       chunk._morning.room],'hex');
     db.get(_by_room,function(err,_doc) {
       var doc = {}; 
-      if(err) {
-         doc = {'recdate':[]};
-      } else {
-         doc = _doc;
+      if(!err) {
+        doc = _doc;
       }
-      doc['recdate'] = _.union(doc['recdate'],[chunk._morning.recdate]);
+      doc['recdate'] = chunk._recdate;
       
       if(chunk._value) {
         if(chunk._student && chunk._student.indexOf(chunk._value.cid)!=-1) {
@@ -129,6 +127,31 @@ var getHostInfo = function(chunk) {
   });
 };
 
+var getTotalRec = function() {
+  return through2.obj(function(chunk,enc,cb) {
+    if(!chunk._morning) {
+      cb(null,chunk);
+      return;
+    }
+    request.post({
+      url:'https://maas.nuqlis.com:9000/api'+
+        '/query/morning/host_year_semester_class_room',
+      json:true,
+      headers:{
+        Authorization:'JWT '+config.token
+      },
+      body:{'match':[chunk._morning.hostid,
+       chunk._morning.year,
+       chunk._morning.semester,
+       chunk._morning.educationclassid,
+       chunk._morning.room],'limit':-1,include_doc:true}
+    },function(err,response,body) {
+      chunk['_recdate'] = _.map(body,'value.doc.recdate');
+      cb(null,chunk);
+    })
+  });
+};
+
 
 var getMorning = function() {
   return through2.obj(function(chunk,enc,cb) {
@@ -164,13 +187,15 @@ var streamHandler = function() {
       cb(null,chunk);
     });
   };
-  return [getMorning,getHostInfo,getQinfoStudentList,setDocument,dump];
+  return [getMorning,getTotalRec,
+  getHostInfo,getQinfoStudentList,setDocument,dump];
 };
 
 logview.config({
   'url':'https://maas.nuqlis.com:9000/api/log/morningdetail',
   'jwtToken':config.token,
   'mainDb':db,
+  'batchSize':100,
   'dbPath':'./dbs/_morningdetail',
   'streamHandler': streamHandler,
 });
@@ -182,10 +207,8 @@ module.exports.sync = function() {
 };
 
 net.createServer(function(con) {
-  setInterval(function() {
-    logview.sync(function() {
-      console.log('sync');
-    });
-  },30000);
+  logview.sync(function() {
+    console.log('sync');
+  });
   con.pipe(multilevel.server(db)).pipe(con);
 }).listen(3000);
