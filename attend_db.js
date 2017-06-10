@@ -155,6 +155,7 @@ var getTotalRec = function() {
 
 var getMorning = function() {
   return through2.obj(function(chunk,enc,cb) {
+    console.log(chunk);
     request.get({
       url:'https://maas.nuqlis.com:9000/api/dbs/morning/'+chunk.value.id,
       json:true,
@@ -195,7 +196,7 @@ logview.config({
   'url':'https://maas.nuqlis.com:9000/api/log/morningdetail',
   'jwtToken':config.token,
   'mainDb':db,
-  'batchSize':100,
+  'batchSize':1000,
   'dbPath':'./dbs/_morningdetail',
   'streamHandler': streamHandler,
 });
@@ -206,9 +207,12 @@ module.exports.sync = function() {
   });
 };
 
-net.createServer(function(con) {
+setInterval(function() {
   logview.sync(function() {
     console.log('sync');
   });
+},60*1000*3);
+
+net.createServer(function(con) {
   con.pipe(multilevel.server(db)).pipe(con);
 }).listen(3000);

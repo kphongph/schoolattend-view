@@ -1,0 +1,70 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="absent-status">
+ <template>
+   <style is="custom-style" 
+     include="iron-flex iron-flex-alignment iron-flex-factors">
+     :host {
+       @apply(--layout-vertical);
+     }
+     .class-cell {
+       height:40px;
+       width:160px;
+     }
+     .number-cell {
+       @apply(--layout-center);
+       text-align:center;
+       vertical-align: middle;
+       height:40px;
+       width:50px;
+     }
+     .content {
+       @apply(--layout-horizontal);
+       @apply(--layout-center);
+       padding:5px;
+     }
+   </style>
+   <paper-input label="year" value="{{year}}">
+   </paper-input>
+   <paper-input label="semester" value="{{semester}}">
+   </paper-input>
+   <paper-input label="host (e.g., 1071020101)" value="{{host}}">
+   </paper-input>
+   <iron-ajax id="query" method="get"
+     last-response="{{result}}">
+   </iron-ajax>
+
+   <template is="dom-repeat" items="{{result}}">
+     <div class="content">
+       <div class="class-cell">{{item.key.3}}</div>
+       <div class="number-cell">{{item.value.gt15p}}</div>
+       <div class="number-cell">{{item.value.total}}</div>
+     </div>
+   </template>
+
+ </template>
+ <script>
+   Polymer({
+    is:"absent-status",
+    properties:{
+    },
+    observers:[
+      '__computeExecute(year,semester,host)'
+    ],
+    ready:function() {
+      this.year = 2017;
+      this.semester= 1;
+      this.host = '1071020101';
+    },
+    __computeExecute:function(year,semester,host) {
+      if(!year || !semester || !host) return;
+      this.$.query.url = '/absent/'+year+'/'+
+        semester+'/'+host;
+      this.$.query.generateRequest();
+    }
+   });
+ </script>
+</dom-module>

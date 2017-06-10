@@ -1,0 +1,21 @@
+{
+  "name": "schoolattend-view",
+  "description": "",
+  "main": "index.js",
+  "license": "ISC",
+  "homepage": "https://github.com/kphongph/schoolattend-view",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "webcomponentsjs": "^1.0.1",
+    "polymer": "^2.0.1",
+    "iron-ajax": "^2.0.2",
+    "paper-input": "^2.0.1"
+  }
+}
